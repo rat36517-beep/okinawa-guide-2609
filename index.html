@@ -179,6 +179,25 @@ svg.map .anchlbl{
 .warnbox b{display:block; font-weight:700; margin-bottom:2px}
 .tipbox{font-size:12.5px; color:var(--muted); border-left:2px solid var(--line); padding-left:10px}
 .day .go{margin-top:2px}
+
+h2.sec{
+  margin:26px 0 13px; font-size:20px; color:var(--ink);
+  padding-bottom:7px; border-bottom:1px solid var(--line);
+}
+h2.sec:first-child{margin-top:4px}
+.day.dim{opacity:.62}
+.day .badge{
+  flex:0 0 auto; background:var(--sea); color:#fff; border-radius:7px;
+  padding:2px 9px; font-size:13px; font-weight:700; font-family:"Noto Sans KR",sans-serif;
+}
+.day.dim .badge{background:var(--muted)}
+.day .hot{background:var(--kawara)}
+.gain{
+  background:var(--sea-soft); color:var(--sea); border-radius:9px;
+  padding:9px 11px; font-size:14px; font-weight:700;
+}
+.kv{margin:0; font-size:13px; display:flex; gap:8px}
+.kv b{flex:0 0 38px; font-weight:500; color:var(--muted); font-size:12px}
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:18px}
 .card{
   background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
@@ -258,6 +277,7 @@ dialog textarea{
       <button class="tab" id="tabList" role="tab" aria-selected="true">목록</button>
       <button class="tab" id="tabMap" role="tab" aria-selected="false">지도</button>
       <button class="tab" id="tabItin" role="tab" aria-selected="false">일정</button>
+      <button class="tab" id="tabDeal" role="tab" aria-selected="false">쿠폰·축제</button>
     </div>
     <div class="row scroll" id="areaRow"><span class="lbl">지역</span></div>
     <div class="row scroll" id="catRow"><span class="lbl">분류</span></div>
@@ -292,6 +312,15 @@ dialog textarea{
   <div id="itinPane" hidden>
     <div class="days" id="days"></div>
   </div>
+
+  <div id="dealPane" hidden>
+    <h2 class="sec">갈 수 있는 축제</h2>
+    <div class="days" id="festGo"></div>
+    <h2 class="sec">쿠폰·할인</h2>
+    <div class="days" id="deals"></div>
+    <h2 class="sec">일정상 못 가는 축제</h2>
+    <div class="days" id="festNo"></div>
+  </div>
 </main>
 
 <dialog id="dlg">
@@ -311,6 +340,8 @@ const COAST = ["M522.8,280.3L525.6,277.6L528.7,268.2L523.4,255.2L519.6,255.0L521
 const PROJ = {"lon0": 127.61540000000001, "lat1": 26.9747, "kx": 0.8948229707502647, "scale": 1086.0121633362296, "w": 709.8, "h": 1000};
 const ANCHORS = [{"n": "나하공항", "s": "9/23·24 도착 · 렌터카 · 9/26·27 출국", "lat": 26.1966997, "lng": 127.6489521}, {"n": "아쿠아치타 나하", "s": "9/23 숙소 · 스노클링 픽업", "lat": 26.2223899, "lng": 127.6832468}, {"n": "마하이나 리조트", "s": "9/24 숙소 · 츄라우미 차 5분", "lat": 26.6829347, "lng": 127.8829009}, {"n": "라구나 가든", "s": "9/25·26 숙소", "lat": 26.2806455, "lng": 127.7382875}];
 const ITIN = [{"d": "9/23", "w": "수", "base": "나하 · 아쿠아치타", "car": false, "who": "부모님 · 여동생 (나는 아직 한국)", "fix": [["09:05", "나하 도착 — RF394 청주발"], ["10:30", "아쿠아치타 나하 짐 맡기기"], ["12:35", "호텔 앞 픽업 (12:35~12:45)"], ["13:00", "치비시 보트 스노클링 ~16:10"], ["저녁", "나하 도보권"]], "warn": "현장 결제 30,000엔(3인) 엔화 현금 · 멀미약은 드럭스토어에서", "pick": {"area": "나하"}, "tip": "차가 없는 유일한 날. 국제거리·츠보야·사카에마치는 다 걸어서 된다."}, {"d": "9/24", "w": "목", "base": "모토부 · 마하이나", "car": true, "who": "오후부터 4명 전원", "fix": [["오전", "부모님·여동생 나하 도보 관광"], ["11:50", "내 도착 — KE2147 인천발"], ["13:00", "렌터카 인수 (12:00 예약 → 조정 필요)"], ["14:30", "북상 시작 · 고속도로 약 1시간 40분"], ["17:00", "마하이나 체크인"]], "warn": "인수 12:00 예약인데 11:50 착륙이라 불가능. TRUSTGO(+81-90-6867-6888, 카톡/라인)에 KE2147 알리고 13:00으로 조정할 것", "pick": {"area": "중부"}, "tip": "나하→모토부 길목에 만좌모·잔파곶·요미탄이 있다. 한 곳만 끼우면 딱 맞다."}, {"d": "9/25", "w": "금", "base": "기노완 · 라구나 가든", "car": true, "who": "4명 전원 — 부모님과 보내는 마지막 하루", "fix": [["08:00", "체크아웃 · 짐 싣기"], ["08:30", "츄라우미 개장 (차 5분)"], ["11:30", "점심 — 모토부 소바 or 고우리섬"], ["오후", "고우리대교 · 비세 후쿠기 가로수길"], ["17:00", "남하 시작 · 약 1시간 40분"], ["19:00", "라구나 가든 체크인 (2실)"]], "warn": "부모님이 다음날 새벽에 나가므로 오늘 저녁이 사실상 마지막. 무리한 이동보다 저녁을 잘 잡는 게 낫다", "pick": {"area": "북부"}, "tip": "체크아웃하고 짐 실은 채로 움직이면 숙소에 다시 안 들러도 된다. 개장(8:30)에 맞춰 들어가면 고래상어 수조가 한산하다."}, {"d": "9/26", "w": "토", "base": "기노완 · 라구나 가든", "car": true, "who": "오전까지 4명 → 이후 나·여동생", "fix": [["06:30", "호텔 출발 (공항 약 40분)"], ["07:10", "부모님 배웅"], ["09:50", "부모님 출발 — RF393"], ["낮", "나·여동생 자유"], ["14:00", "라구나 가든 재체크인 (1실)"]], "warn": "부모님 09:50 출발이라 06:30에는 나서야 한다. 전날 밤에 짐 다 싸둘 것", "pick": {"area": "중부"}, "tip": "배웅 후 시간이 통째로 남는다. 해중도로·코자처럼 둘이 다니기 좋은 데가 이 날이다."}, {"d": "9/27", "w": "일", "base": "귀국", "car": true, "who": "나 · 여동생", "fix": [["07:00", "조식 (2인 포함)"], ["08:40", "체크아웃·출발"], ["09:20", "여동생 공항 드롭 (11:30 ZE634)"], ["10:00", "렌터카 반납 → 셔틀"], ["12:50", "내 출발 — KE2148"]], "warn": "반납 예약은 12:00이지만 그러면 12:50 비행기를 놓친다. 10:00으로 앞당길 것", "pick": {"area": "나하"}, "tip": "아침에 한 곳만 더 본다면 공항 5분 거리의 세나가지마(우미카지테라스)."}];
+const FEST = [{"go": true, "d": "9/26", "title": "기노완 하고로모 축제", "when": "9/26(토) 저녁 — 축제 자체는 26~27일", "where": "기노완 해변공원 · 라구나 가든에서 도보 5분(378m)", "fee": "무료", "why": "기노완시 최대 축제(연인원 8.7만명). 야외 무대 공연과 카차시 대회. 부모님 배웅한 날 저녁이라 시간이 통째로 비어 있고, 차를 댈 필요도 없다.", "note": "불꽃놀이는 27일 20:30이라 귀국 후다. 26일에는 무대 공연만.", "url": "https://www.city.ginowan.lg.jp/soshiki/keizai/2/12839.html"}, {"go": true, "d": "9/24", "title": "류큐무라 에이사 공연", "when": "매일 10:00 / 12:00 / 14:00 / 16:00", "where": "온나손 류큐무라 · 나하→모토부 가는 길목", "fee": "입장료에 포함", "why": "9/24 북상하는 길에 그대로 걸린다. 섬노래·류큐무용·에이사를 묶은 공연이라 오키나와 전통 예능을 한 번에 본다.", "note": "우천 시 공연장이 바뀔 수 있다. 시간표는 당일 확인.", "url": "https://www.ryukyumura.co.jp/showtime/"}, {"go": false, "d": "9/23", "title": "류큐 페스티벌 2026", "when": "9/23(수) 15:00 개연", "where": "오키나와 컨벤션센터 (기노완)", "fee": "유료 (티켓 필요)", "why": "1998년 이후 28년 만의 오키나와 개최. 치나 사다오·BEGIN·가리유시58 등 총출동.", "note": "그날은 나하에 있고 13:00~16:10 스노클링과 정면으로 겹친다.", "url": ""}, {"go": false, "d": "9/25", "title": "이토만 대줄다리기", "when": "9/25(금) · 음력 8월 15일 십오야", "where": "이토만시 (남부)", "fee": "무료", "why": "오키나와 3대 줄다리기 중 하나. 낮 퍼레이드, 저녁 본행사.", "note": "그날은 북부 츄라우미 일정이라 섬 반대편이다.", "url": ""}, {"go": false, "d": "9/27", "title": "코자 테루린 축제", "when": "9/27(일) 15:00", "where": "오키나와시 중앙 파크애비뉴", "fee": "무료", "why": "오키나와 예능인이 총집결하는 무료 야외 공연.", "note": "그날 12:50 비행기라 이미 떠난 뒤다.", "url": ""}];
+const DEALS = [{"cat": "관광", "title": "츄라우미 티켓 — 道の駅 許田에서", "hot": true, "gain": "성인 2,180엔 → 2,000엔 (4인 720엔 절약)", "where": "道の駅 許田 (나고) · 고속도로 許田IC 바로 옆", "how": "9/24 북상할 때 들러서 미리 산다. 반년 유효라 9/25에 써도 된다.", "warn": "현금만 받는다. 판매 8:30~19:00. 환불·재발행 불가.", "url": "https://www.yanbaru-b.co.jp/discount-ticket.php"}, {"cat": "교통", "title": "고속도로 ETC 할인 — 렌터카 업체에 문의", "hot": true, "gain": "전 구간 35.5% 할인 (현금 결제는 할인 없음)", "where": "오키나와자동차도 · TRUSTGO", "how": "9/24 인수 시간 조정하러 연락할 때 ETC카드 대여가 되는지 같이 묻는다(보통 330엔).", "warn": "바우처에 ETC 카드가 없다. 카드 없이 타면 통행료를 정가로 낸다.", "url": ""}, {"cat": "쇼핑", "title": "돈키호테", "hot": true, "gain": "면세 10% + 추가 최대 7%", "where": "나하 국제거리점 등 오키나와 전 지점", "how": "LiveJapan 쿠폰 페이지를 열어 계산 전에 여권과 함께 보여준다.", "warn": "회원가입·앱 설치 불필요. 5,001엔 이상부터.", "url": "https://livejapan.com/ja/article-a0005736/"}, {"cat": "쇼핑", "title": "마츠모토키요시", "gain": "면세 10% + 금액대별 3~7%", "where": "나하 국제거리점 등", "how": "Klook에서 무료 쿠폰을 받아(결제 없음) 계산 시 여권과 함께 제시.", "warn": "Klook 이메일 가입만 필요. 일본 전화번호는 필요 없다.", "url": "https://www.klook.com/ja/activity/150096-matsumoto-kiyoshi-duty-free-discount-coupon/"}, {"cat": "쇼핑", "title": "이온몰 오키나와 라이카무", "gain": "몰 전용 쿠폰북 무료", "where": "기타나카구스쿠 · 숙소에서 15분", "how": "1층 투어리스트 인포메이션에서 여권을 보여주고 받는다.", "warn": "비 오는 날 대안으로도 쓸 수 있는 곳이다.", "url": "https://www.welcome-aeon.com/coupon/"}, {"cat": "쇼핑", "title": "아시비나 아울렛", "gain": "쿠폰시트 무료", "where": "도미구스쿠 · 나하공항에서 15분", "how": "인포메이션 센터에서 받아 입점 매장에서 사용.", "warn": "JCB 카드 할인은 2026년 7월 종료됐다. 쿠폰시트는 그대로 받을 수 있다.", "url": ""}, {"cat": "쇼핑", "title": "면세 제도 — 9월은 즉시 면세", "gain": "소비세 10%를 계산 시점에 바로 뺀다", "where": "免税 표시가 있는 모든 매장", "how": "세전 5,000엔 이상 구매 시 결제 전에 여권을 제시한다.", "warn": "여권 원본 필수(사본 불가). 소모품 봉인 포장은 귀국 후 개봉할 것 — 뜯으면 면세 무효. 11월부터 환급 방식으로 바뀌지만 이번 여행은 해당 없다.", "url": "https://www.nta.go.jp/taxes/shiraberu/taxanswer/shohi/6559.htm"}, {"cat": "식당", "title": "핫페퍼 구르메", "gain": "매장별 할인·음료 서비스", "where": "오키나와 음식점 전반", "how": "가게 페이지의 쿠폰 탭을 열어 계산 전에 화면을 보여준다.", "warn": "예약하지 않고 그냥 가서 쿠폰만 제시하면 일본 전화번호가 필요 없다.", "url": "https://www.hotpepper.jp/SA98/G008/"}, {"cat": "앱", "title": "Okinawa FunPASS", "gain": "드럭스토어·기념품점·렌터카 제휴 할인", "where": "앱 설치 후 제휴 매장", "how": "출국 전에 깔아두고 매장에서 화면 제시.", "warn": "관광시설 입장료보다는 쇼핑 쪽 할인이 중심이다.", "url": "https://okinawa.funpass.app/?lang=ja_JP"}, {"cat": "안 됨", "title": "이건 우리한테 해당 없다", "gain": "", "where": "", "how": "美ら海とくとく5パス(5,900엔) — 수족관 말고 4곳을 더 가야 이득인데 일정상 안 간다. OKINAWA丸ごとポン — たびらい 렌터카 예약자 전용. OTS 고속도로 정액제 — OTS 렌터카 전용. 5대 구스쿠 공통권 — 존재가 확인되지 않았다.", "warn": "블루씰 더블데이(8·18·28일), 야빠리스테이크 이벤트(9·29일)는 여행 날짜와 안 겹친다.", "url": ""}];
 const KEY = "okinawa-picks-v1";
 
 const store = {
@@ -740,28 +771,113 @@ function buildItin(){
   });
 }
 
+/* ---- 쿠폰·축제 ---- */
+function row(label, text, cls){
+  const p = document.createElement("p");
+  p.className = "kv" + (cls ? " " + cls : "");
+  const b = document.createElement("b"); b.textContent = label;
+  const s = document.createElement("span"); s.textContent = text;
+  p.append(b, s);
+  return p;
+}
+function linkBtn(url, label){
+  const a = document.createElement("a");
+  a.className = "go"; a.href = url; a.target = "_blank"; a.rel = "noopener";
+  a.textContent = label;
+  return a;
+}
+
+function festCard(f){
+  const c = document.createElement("article");
+  c.className = "day" + (f.go ? "" : " dim");
+  const hd = document.createElement("div");
+  hd.className = "hd";
+  const b = document.createElement("span");
+  b.className = "badge" + (f.go ? " hot" : ""); b.textContent = f.d;
+  const t = document.createElement("span");
+  t.className = "dt"; t.style.fontSize = "19px"; t.textContent = f.title;
+  hd.append(b, t);
+  c.append(hd);
+  c.append(row("언제", f.when), row("어디", f.where), row("요금", f.fee));
+  const why = document.createElement("p");
+  why.className = "desc"; why.textContent = f.why;
+  c.append(why);
+  if (f.note){
+    const n = document.createElement("p");
+    n.className = f.go ? "tipbox" : "warnbox";
+    n.textContent = f.note;
+    c.append(n);
+  }
+  if (f.url) c.append(linkBtn(f.url, "공식 안내 열기"));
+  return c;
+}
+
+function dealCard(d){
+  const c = document.createElement("article");
+  c.className = "day" + (d.cat === "안 됨" ? " dim" : "");
+  const hd = document.createElement("div");
+  hd.className = "hd";
+  const b = document.createElement("span");
+  b.className = "badge" + (d.hot ? " hot" : ""); b.textContent = d.cat;
+  const t = document.createElement("span");
+  t.className = "dt"; t.style.fontSize = "18px"; t.textContent = d.title;
+  hd.append(b, t);
+  c.append(hd);
+  if (d.gain){
+    const g = document.createElement("p");
+    g.className = "gain"; g.textContent = d.gain;
+    c.append(g);
+  }
+  if (d.where) c.append(row("어디", d.where));
+  if (d.how){
+    const h = document.createElement("p");
+    h.className = "desc"; h.textContent = d.how;
+    c.append(h);
+  }
+  if (d.warn){
+    const w = document.createElement("p");
+    w.className = "tipbox"; w.textContent = d.warn;
+    c.append(w);
+  }
+  if (d.url) c.append(linkBtn(d.url, "링크 열기"));
+  return c;
+}
+
+function buildDeals(){
+  const go = document.getElementById("festGo");
+  if (go.childElementCount) return;
+  go.append(...FEST.filter(f => f.go).map(festCard));
+  document.getElementById("festNo").append(...FEST.filter(f => !f.go).map(festCard));
+  document.getElementById("deals").append(...DEALS.map(dealCard));
+}
+
 const listPane = document.getElementById("listPane");
 const mapPane = document.getElementById("mapPane");
 const itinPane = document.getElementById("itinPane");
+const dealPane = document.getElementById("dealPane");
 const tabList = document.getElementById("tabList");
 const tabMap = document.getElementById("tabMap");
 const tabItin = document.getElementById("tabItin");
+const tabDeal = document.getElementById("tabDeal");
 function setTab(which){
-  const panes = { list: [listPane, tabList], map: [mapPane, tabMap], itin: [itinPane, tabItin] };
+  const panes = { list: [listPane, tabList], map: [mapPane, tabMap],
+                  itin: [itinPane, tabItin], deal: [dealPane, tabDeal] };
   for (const k in panes){
     panes[k][0].hidden = k !== which;
     panes[k][1].setAttribute("aria-selected", String(k === which));
   }
-  document.querySelector(".bar").classList.toggle("tabsonly", which === "itin");
+  document.querySelector(".bar").classList.toggle("tabsonly", which === "itin" || which === "deal");
   if (which === "map"){
     if (!dotLayer) initMap();
     drawDots();
   }
   if (which === "itin") buildItin();
+  if (which === "deal") buildDeals();
 }
 tabList.addEventListener("click", () => setTab("list"));
 tabMap.addEventListener("click", () => setTab("map"));
 tabItin.addEventListener("click", () => setTab("itin"));
+tabDeal.addEventListener("click", () => setTab("deal"));
 if (!ITIN.length) tabItin.hidden = true;   // 공개용 빌드에는 일정이 없다
 
 const dlg = document.getElementById("dlg");
